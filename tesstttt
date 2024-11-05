@@ -1,0 +1,271 @@
+########################
+#List All Items#
+########################
+
+@app.route('/trips')
+def list_trips():
+    '''
+    List all rows in trips by calling the relevant database calls and pushing to the appropriate template
+    '''
+    # connect to the database and call the relevant function
+    trips_listdict = database.list_trips()
+
+    # Handle the null condition
+    if (trips_listdict is None):
+        # Create an empty list and show error message
+        trips_listdict = []
+        flash('Error, there are no rows in trips')
+    page['title'] = 'List Contents of trips'
+    return render_template('list_trips.html', page=page, session=session, trips=trips_listdict)
+    
+
+########################
+#List Single Items#
+########################
+
+
+@app.route('/trips/<tripid>')
+def list_single_trips(tripid):
+    '''
+    List all rows in trips that match a particular id attribute tripid by calling the 
+    relevant database calls and pushing to the appropriate template
+    '''
+
+    # connect to the database and call the relevant function
+    trips_listdict = None
+    trips_listdict = database.list_trips_equifilter("tripid", tripid)
+
+    # Handle the null condition
+    if (trips_listdict is None or len(trips_listdict) == 0):
+        # Create an empty list and show error message
+        trips_listdict = []
+        flash('Error, there are no rows in trips that match the attribute "tripid" for the value '+tripid)
+    page['title'] = 'List Single tripid for trips'
+    return render_template('list_trips.html', page=page, session=session, trips=trips_listdict)
+
+
+########################
+#List Search Items#
+########################
+
+@app.route('/trip_stats')
+def list_trip_stats():
+    '''
+    List some trip stats
+    '''
+    # connect to the database and call the relevant function
+    trip_stats = database.list_trip_stats()
+
+    # Handle the null condition
+    if (trip_stats is None):
+        # Create an empty list and show error message
+        trip_stats = []
+        flash('Error, there are no rows in trip_stats')
+    page['title'] = 'trip Stats'
+    return render_template('list_trip_stats.html', page=page, session=session, trips=trip_stats)
+
+@app.route('/trips/search', methods=['POST', 'GET'])
+def search_trips_bydate():
+    '''
+    List all rows in trips that match a particular name
+    by calling the relevant database calls and pushing to the appropriate template
+    '''
+    if(request.method == 'POST'):
+
+        fnamesearch = database.search_trips_customfilter("cardid","~",request.form['searchterm'])
+        print(fnamesearch)
+        lnamesearch = database.search_trips_customfilter("traveldate","~",request.form['searchterm'])
+        print(lnamesearch)
+        
+        trips_listdict = None
+
+        if((fnamesearch == None) and (lnamesearch == None)):
+            errortext = "Error with the database connection."
+            errortext += "Please check your terminal and make sure you updated your INI files."
+            flash(errortext)
+            return redirect(url_for('index'))
+        if(((fnamesearch == None) and (lnamesearch == None)) or ((len(fnamesearch) < 1) and len(lnamesearch) < 1)):
+            flash(f"No items found for searchterm: {request.form['searchterm']}")
+            return redirect(url_for('index'))
+        else:
+            
+            trips_listdict = fnamesearch
+            trips_listdict.extend(lnamesearch)
+            # Handle the null condition'
+            print(trips_listdict)
+            if (trips_listdict is None or len(trips_listdict) == 0):
+                # Create an empty list and show error message
+                trips_listdict = []
+                flash('Error, there are no rows in trips that match the searchterm '+request.form['searchterm'])
+            page['title'] = 'Search for a trip by name'
+            return render_template('list_trips.html', page=page, session=session, trips=trips_listdict)
+            
+
+    else:
+        return redirect(url_for('/trips'))
+        
+@app.route('/trips/delete/<tripid>')
+def delete_trip(tripid):
+    '''
+    List all rows in stations join stationtypes 
+    by calling the relvant database calls and pushing to the appropriate template
+    '''
+    # connect to the database and call the relevant function
+    resultval = database.delete_trip(tripid)
+    
+    # trips_listdict = database.list_trips()
+
+    # # Handle the null condition
+    # if (trips_listdict is None):
+    #     # Create an empty list and show error message
+    #     trips_listdict = []
+    #     flash('Error, there are no rows in stations_stationtypes_listdict')
+    page['title'] = f'List trips after trip {tripid} has been deleted'
+    return redirect(url_for('list_trips'))
+    
+@app.route('/trips/update', methods=['POST','GET'])
+def update_trip():
+    """
+    Update details for a trip
+    """
+    # # Check if the trip is logged in, if not: back to login.
+    if('logged_in' not in session or not session['logged_in']):
+        return redirect(url_for('login'))
+    
+    # Need a check for isAdmin
+
+    page['title'] = 'Update trip details'
+
+    tripslist = None
+    print("request form is:")
+    newdict = {}
+    print(request.form)
+    validupdate = False
+    # Check your incoming parameters
+    if(request.method == 'POST'):
+
+        # verify that the values are available:
+        if ('tripid' not in request.form):
+            # should be an exit condition
+            flash("Can not update without a tripid")
+            return redirect(url_for('list_trips'))
+        else:
+            newdict['tripid'] = request.form['tripid']
+            print("We have a value: ",newdict['tripid'])
+
+        if ('cardid' not in request.form):
+            newdict['cardid'] = None
+        else:
+            validupdate = True
+            newdict['cardid'] = request.form['cardid']
+            print("We have a value: ",newdict['cardid'])
+
+        if ('traveldate' not in request.form):
+            newdict['traveldate'] = None
+        else:
+            validupdate = True
+            newdict['traveldate'] = request.form['traveldate']
+            print("We have a value: ",newdict['traveldate'])
+
+        if ('entrystationid' not in request.form):
+            newdict['entrystationid'] = None
+        else:
+            validupdate = True
+            newdict['entrystationid'] = request.form['entrystationid']
+            print("We have a value: ",newdict['entrystationid'])
+
+        if ('exitstationid' not in request.form):
+            newdict['exitstationid'] = None
+        else:
+            validupdate = True
+            newdict['exitstationid'] = request.form['exitstationid']
+            print("We have a value: ",newdict['exitstationid'])
+
+        if ('tripstarttime' not in request.form):
+            newdict['tripstarttime'] = None
+        else:
+            validupdate = True
+            newdict['tripstarttime'] = request.form['tripstarttime']
+            print("We have a value: ",newdict['tripstarttime'])
+
+
+        print('Update dict is:')
+        print(newdict, validupdate)
+
+        if validupdate:
+            #forward to the database to manage update
+            tripslist = database.update_single_trip(newdict['tripid'],newdict['cardid'],newdict['traveldate'],newdict['entrystationid'],newdict['exitstationid'],newdict['tripstarttime'])
+        else:
+            # no updates
+            flash("No updated values for trip with tripid")
+            return redirect(url_for('list_trips'))
+        # Should redirect to your newly updated trip
+        return list_single_trips(newdict['tripid'])
+    else:
+        return redirect(url_for('list_trips'))
+
+######
+## add items
+######
+
+    
+@app.route('/trips/add', methods=['POST','GET'])
+def add_trip():
+    """
+    Add a new trip
+    """
+    # # Check if the trip is logged in, if not: back to login.
+    if('logged_in' not in session or not session['logged_in']):
+        return redirect(url_for('login'))
+    
+    # Need a check for isAdmin
+
+    page['title'] = 'Add trip details'
+
+    tripslist = None
+    print("request form is:")
+    newdict = {}
+    print(request.form)
+
+    # Check your incoming parameters
+    if(request.method == 'POST'):
+
+        # verify that the values are available:
+        
+        if ('cardid' not in request.form):
+            newdict['cardid'] = 'Empty cardid'
+        else:
+            newdict['cardid'] = request.form['cardid']
+            print("We have a value: ",newdict['cardid'])
+
+        if ('traveldate' not in request.form):
+            newdict['traveldate'] = 'Empty traveldate'
+        else:
+            newdict['traveldate'] = request.form['traveldate']
+            print("We have a value: ",newdict['traveldate'])
+
+        if ('entrystationid' not in request.form):
+            newdict['entrystationid'] = 1 # default is traveler
+        else:
+            newdict['entrystationid'] = request.form['entrystationid']
+            print("We have a value: ",newdict['entrystationid'])
+
+        if ('exitstationid' not in request.form):
+            newdict['exitstationid'] = 'blank'
+        else:
+            newdict['exitstationid'] = request.form['exitstationid']
+            print("We have a value: ",newdict['exitstationid'])
+
+        if ('tripstarttime' not in request.form):
+            newdict['tripstarttime'] = 'blank'
+        else:
+            newdict['tripstarttime'] = request.form['tripstarttime']
+            print("We have a value: ",newdict['tripstarttime'])
+
+        print('Insert parameters are:')
+        print(newdict)
+
+        database.add_trip_insert(newdict['cardid'],newdict['traveldate'],newdict['entrystationid'],newdict['exitstationid'],newdict['tripstarttime'])
+        # Should redirect to your newly updated trip
+        print("did it go wrong here?")
+        return redirect(url_for('list_trips'))

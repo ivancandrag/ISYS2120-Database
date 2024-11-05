@@ -1,0 +1,66 @@
+{% include 'top.html' %}
+<div class="content">
+    <div class="container details">
+
+        <h2 class="title"> Add Trip </h2>
+
+        <!-- -- trips: tripid, cardid, traveldate, preferredname, entrystationid, exitstationid, tripstarttime
+            CREATE TABLE Trips (
+                tripid serial PRIMARY KEY,
+                cardid bigint REFERENCES OpalCards(cardid) ON DELETE CASCADE NOT NULL ,
+                traveldate date NOT NULL,
+                entrystationid bigint REFERENCES Stations(stationid) NOT NULL,
+                exitstationid bigint REFERENCES Stations(stationid) NOT NULL,
+                tripstarttime time
+            );
+
+            Associated triprole information
+                - needs to be a drop down of valid triproles
+                    - display by rolename
+                    - form input by entrystationid
+
+        -->
+        <form class="Add" method="POST" action="{{url_for('add_trip')}}">
+
+            <label for="cardid">Card id:</label>
+            <input type="number" id="cardid" name="cardid" value=1>
+            <br/>
+            <label for="traveldate">Travel date:</label>
+            <input type="date" id="traveldate" name="traveldate" autofocus required>
+            <br/>
+            <label for="entrystationid">Entry station id:</label>
+            <select id="entrystationid" name="entrystationid">
+                {% for item in stations %}
+                    <option value="{{item['stationid']}}" >{{item['stationid']}} </option>
+                {% endfor %}
+            </select>
+            <br/>
+            <label for="exitstationid">Exit station id:</label>
+            <select id="exitstationid" name="exitstationid">
+                {% for item in stations %}
+                    <option value="{{item['stationid']}}" >{{item['stationid']}} </option>
+                {% endfor %}
+            </select>
+            <br/>
+            <label for="tripstarttime">Trip start time:</label>
+            <input type="time" id="tripstarttime" name="tripstarttime" autofocus required>
+            <br/>
+            <br/>
+            <button class="pure-button pure-button-primary" type="submit">Add</button>
+            <br/>
+            <hr/>
+            <hr/>
+            <hr/>
+            
+
+        </form>
+        <br/>
+        <div>
+ 
+        <br/>
+        <div>
+
+    </div>
+</div>
+</body>
+</html>
